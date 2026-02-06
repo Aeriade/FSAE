@@ -1,0 +1,47 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+void checkUSBPorts() {
+    std::string sysfs_path = "/sys/bus/usb/devices";
+    bool deviceFound = false;
+
+    std::cout << "Checking USB devices...\n";
+
+    try {
+        for (const auto& entry : fs::directory_iterator(sysfs_path)) {
+            if (fs::is_directory(entry)) {
+                std::string device_path = entry.path().string();
+                std::ifstream product_file(device_path + "/product");
+                std::ifstream speed_file(device_path + "/speed");
+
+                std::string product, speed;
+                if (std::getline(product_file, product) &&
+                    std::getline(speed_file, speed) &&
+                    !speed.empty()) {
+
+                    std::cout << "Device: " << product
+                              << " | Speed: " << speed << " Mbps\n";
+                    deviceFound = true;
+                }
+            }
+        }
+
+        if (!deviceFound) {
+            std::cout << "No USB devices detected.\n";
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+    }
+}
+
+int main() {
+    std::cout << "USB Port Detection Tool\n";
+    checkUSBPorts();
+    return 0;
+}
